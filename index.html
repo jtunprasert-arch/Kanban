@@ -3,49 +3,59 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Cloud Kanban - Activity Tracking</title>
+<title>Cloud Kanban Pro - Activity Tracking</title>
 <style>
-  body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; overflow: hidden; touch-action: none; }
+  :root {
+    --board-brown: #795548;
+    --lane-bg: rgba(255, 255, 255, 0.15);
+  }
+  body, html { margin: 0; padding: 0; height: 100%; font-family: 'Chakra Petch', sans-serif; background-color: #eef2f3; overflow: hidden; touch-action: none; }
+  
   #container { display: flex; width: 100vw; height: 100vh; padding: 15px; gap: 15px; box-sizing: border-box; }
 
   /* ส่วนของบอร์ด */
   #board-wrapper { 
     flex: 4; 
     overflow: auto; 
-    border: 8px solid #795548; 
+    border: 8px solid var(--board-brown); 
     border-radius: 15px; 
     background: #d7bfa9; 
     position: relative; 
-    -webkit-overflow-scrolling: touch;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
   }
   #board { 
-    width: 1500px; /* เพิ่มพื้นที่บอร์ดให้กว้างขึ้น */
-    height: 1200px; /* เพิ่มพื้นที่บอร์ดให้สูงขึ้น */
+    width: 1500px; 
+    height: 1200px; 
     display: flex; 
     position: relative; 
   }
   
-  .lane { flex: 1; border-right: 2px dashed rgba(121, 85, 72, 0.3); position: relative; pointer-events: none; }
+  .lane { 
+    flex: 1; 
+    border-right: 2px dashed rgba(121, 85, 72, 0.3); 
+    position: relative; 
+    transition: background 0.3s;
+  }
   .lane:last-child { border-right: none; }
   .lane-header { 
-    background: rgba(255, 255, 255, 0.2); 
+    background: rgba(62, 39, 35, 0.1); 
     padding: 15px; 
     text-align: center; 
-    font-size: 1.2rem; 
-    font-weight: bold; 
+    font-size: 1.4rem; 
+    font-weight: 800; 
     color: #3e2723; 
-    border-bottom: 2px solid #795548; 
-    pointer-events: auto;
+    border-bottom: 3px solid var(--board-brown); 
     position: sticky;
     top: 0;
     z-index: 2000;
+    backdrop-filter: blur(5px);
   }
 
   /* Sidebar */
   #sidebar { flex: 1.2; display: flex; flex-direction: column; gap: 10px; min-width: 250px; }
   #palette { 
     background: white; 
-    border: 2px solid #795548; 
+    border: 2px solid var(--board-brown); 
     border-radius: 10px; 
     display: grid; 
     grid-template-columns: repeat(4, 1fr); 
@@ -53,6 +63,7 @@
     padding: 15px; 
     overflow-y: auto; 
     flex-grow: 1; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
   }
   
   /* Post-it */
@@ -62,59 +73,56 @@
     font-weight: 600; 
     cursor: grab; 
     position: absolute; 
-    min-width: 140px; 
-    min-height: 140px; 
-    padding: 25px 12px 35px; 
-    box-shadow: 4px 4px 10px rgba(0,0,0,0.2); 
+    min-width: 150px; 
+    min-height: 150px; 
+    padding: 25px 12px 40px; 
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.15); 
     touch-action: none; 
     will-change: transform, left, top;
+    transition: transform 0.1s;
   }
-  .postit:active { cursor: grabbing; }
-  .content { outline: none; white-space: pre-wrap; font-size: 14px; min-height: 80px; color: inherit; }
+  .postit:active { cursor: grabbing; transform: scale(1.05) rotate(2deg); }
+  .content { outline: none; white-space: pre-wrap; font-size: 15px; min-height: 80px; color: inherit; line-height: 1.4; }
   
-  .meta-info { position: absolute; bottom: 6px; left: 8px; font-size: 9px; opacity: 0.9; pointer-events: none; display: flex; flex-direction: column; }
-  .delete-btn { position: absolute; top: 4px; right: 4px; border: none; background: rgba(0,0,0,0.1); border-radius: 50%; width: 24px; height: 24px; cursor: pointer; color: inherit; font-weight: bold; }
-  
-  .palette-item { aspect-ratio: 1 / 1; border-radius: 4px; cursor: pointer; border: 1px solid #ddd; }
-  .btn-clear { padding: 12px; background: #e63946; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; }
-
-  /* Color Palette - ครบตามที่ระบุ */
-  .yellow { background: #fff475; color: #333; } 
-  .pink { background: #ff9aa2; color: #333; } 
-  .green { background: #b5e7a0; color: #333; }
-  .blue { background: #a0c4ff; color: #333; } 
-  .orange { background: #ffb347; color: #333; } 
-  .lavender { background: #e1ceff; color: #333; }
-  .mint { background: #c1f0e8; color: #333; } 
-  .rose { background: #ffc8dd; color: #333; } 
-  .clay { background: #cb997e; color: #fff; }
-  .dark { background: #3d405b; color: #fff; } 
-  .teal { background: #81b29a; color: #fff; } 
-  .cream { background: #fefae0; color: #333; }
-  .coral { background: #ff8b94; color: #fff; } 
-  .lime { background: #d4fc79; color: #333; } 
-  .sky { background: #caf0f8; color: #333; }
-  .coffee { background: #6f4e37; color: #fff; } 
-  .gold { background: #ffd700; color: #333; } 
-  .plum { background: #6a0572; color: #fff; }
-  .smoke { background: #8d99ae; color: #fff; } 
-  .forest { background: #2d6a4f; color: #fff; }
-  .brick { background: #bc4749; color: #fff; } 
-  .mustard { background: #e9c46a; color: #333; } 
-  .indigo { background: #4cc9f0; color: #333; } 
-  .peach { background: #f4a261; color: #fff; }
-
-  /* ปรับปุ่มลบสำหรับสีเข้ม */
-  .postit.dark .delete-btn, .postit.coffee .delete-btn, .postit.forest .delete-btn, 
-  .postit.plum .delete-btn, .postit.brick .delete-btn, .postit.clay .delete-btn {
-    background: rgba(255, 255, 255, 0.2);
+  .meta-info { position: absolute; bottom: 8px; left: 10px; font-size: 10px; opacity: 0.8; pointer-events: none; }
+  .lane-tag { 
+    display: inline-block; 
+    padding: 2px 6px; 
+    background: rgba(0,0,0,0.1); 
+    border-radius: 4px; 
+    margin-bottom: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
   }
+  
+  .delete-btn { position: absolute; top: 6px; right: 6px; border: none; background: rgba(0,0,0,0.08); border-radius: 50%; width: 26px; height: 26px; cursor: pointer; color: inherit; font-size: 14px; transition: 0.2s; }
+  .delete-btn:hover { background: rgba(255,0,0,0.2); }
+  
+  .palette-item { aspect-ratio: 1 / 1; border-radius: 6px; cursor: pointer; border: 1px solid #ddd; transition: transform 0.2s; }
+  .palette-item:hover { transform: scale(1.1); }
+  
+  .btn-clear { padding: 15px; background: #e63946; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+  .btn-clear:hover { background: #c1121f; }
+
+  /* Colors */
+  .yellow { background: #fff475; color: #333; } .pink { background: #ff9aa2; color: #333; }
+  .green { background: #b5e7a0; color: #333; } .blue { background: #a0c4ff; color: #333; }
+  .orange { background: #ffb347; color: #333; } .lavender { background: #e1ceff; color: #333; }
+  .mint { background: #c1f0e8; color: #333; } .rose { background: #ffc8dd; color: #333; }
+  .clay { background: #cb997e; color: #fff; } .dark { background: #3d405b; color: #fff; }
+  .teal { background: #81b29a; color: #fff; } .cream { background: #fefae0; color: #333; }
+  .coral { background: #ff8b94; color: #fff; } .lime { background: #d4fc79; color: #333; }
+  .sky { background: #caf0f8; color: #333; } .coffee { background: #6f4e37; color: #fff; }
+  .gold { background: #ffd700; color: #333; } .plum { background: #6a0572; color: #fff; }
+  .smoke { background: #8d99ae; color: #fff; } .forest { background: #2d6a4f; color: #fff; }
+  .brick { background: #bc4749; color: #fff; } .mustard { background: #e9c46a; color: #333; }
+  .indigo { background: #4cc9f0; color: #333; } .peach { background: #f4a261; color: #fff; }
 
   @media (max-width: 768px) {
     #container { flex-direction: column-reverse; }
-    #sidebar { flex: 0.4; min-width: 100%; flex-direction: row; }
-    #palette { grid-template-columns: repeat(8, 1fr); height: 70px; padding: 5px; }
-    .btn-clear { width: 80px; font-size: 10px; }
+    #sidebar { flex: 0.4; min-width: 100%; flex-direction: row; align-items: center; }
+    #palette { grid-template-columns: repeat(8, 1fr); height: 80px; padding: 5px; flex-grow: 1; }
+    .btn-clear { width: auto; white-space: nowrap; padding: 10px; }
   }
 </style>
 </head>
@@ -123,9 +131,9 @@
 <div id="container">
   <div id="board-wrapper">
     <div id="board">
-      <div class="lane"><div class="lane-header" contenteditable="true">TO DO</div></div>
-      <div class="lane"><div class="lane-header" contenteditable="true">DOING</div></div>
-      <div class="lane"><div class="lane-header" contenteditable="true">DONE</div></div>
+      <div class="lane" data-lane="TO DO"><div class="lane-header" contenteditable="true">TO DO</div></div>
+      <div class="lane" data-lane="DOING"><div class="lane-header" contenteditable="true">DOING</div></div>
+      <div class="lane" data-lane="DONE"><div class="lane-header" contenteditable="true">DONE</div></div>
     </div>
   </div>
   <div id="sidebar">
@@ -157,21 +165,28 @@
   function formatDateTime(ts) {
     if (!ts) return "";
     const d = new Date(ts);
-    const datePart = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit' });
-    const timePart = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-    return `${datePart} | ${timePart}`;
+    return d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit' }) + " " + d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
   }
 
-  // สร้างปุ่ม Palette สี
+  // คำนวณว่าโน้ตอยู่ที่ Column ไหน
+  function getLaneName(x) {
+    const laneWidth = 1500 / 3;
+    if (x < laneWidth) return "TO DO";
+    if (x < laneWidth * 2) return "DOING";
+    return "DONE";
+  }
+
   COLOR_LIST.forEach(color => {
     const d = document.createElement('div');
     d.className = `palette-item ${color}`;
     d.onclick = () => {
       const wrapper = document.getElementById('board-wrapper');
+      const startX = wrapper.scrollLeft + 50;
+      const startY = wrapper.scrollTop + 100;
       push(postitsRef, { 
         color, text: "", 
-        x: wrapper.scrollLeft + 40, 
-        y: wrapper.scrollTop + 80, 
+        x: startX, y: startY, 
+        lane: getLaneName(startX),
         updatedAt: serverTimestamp(), 
         action: "🆕 สร้าง" 
       });
@@ -182,7 +197,7 @@
   let activeId = null, offsetX = 0, offsetY = 0, isMoved = false;
 
   function handleStart(e, id) {
-    if (e.target.className === 'content' || e.target.className === 'delete-btn') return;
+    if (e.target.closest('.content') || e.target.closest('.delete-btn')) return;
     
     activeId = id;
     isMoved = false;
@@ -193,9 +208,7 @@
     
     offsetX = clientX - rect.left;
     offsetY = clientY - rect.top;
-    
-    // ตั้งค่า z-index ชั่วคราวให้สูงที่สุดขณะลาก
-    el.style.zIndex = 9999;
+    el.style.zIndex = 10000;
     
     document.addEventListener('mousemove', handleMove, { passive: false });
     document.addEventListener('touchmove', handleMove, { passive: false });
@@ -210,19 +223,29 @@
 
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const boardRect = document.getElementById('board').getBoundingClientRect();
-    const el = document.getElementById(activeId);
+    const board = document.getElementById('board');
+    const boardRect = board.getBoundingClientRect();
 
-    el.style.left = (clientX - boardRect.left - offsetX) + 'px';
-    el.style.top = (clientY - boardRect.top - offsetY) + 'px';
+    let newX = clientX - boardRect.left - offsetX;
+    let newY = clientY - boardRect.top - offsetY;
+
+    // Boundary check
+    newX = Math.max(0, Math.min(newX, 1500 - 150));
+    newY = Math.max(0, Math.min(newY, 1200 - 150));
+
+    const el = document.getElementById(activeId);
+    el.style.left = newX + 'px';
+    el.style.top = newY + 'px';
   }
 
   function handleEnd() {
     if (activeId && isMoved) {
       const el = document.getElementById(activeId);
+      const newX = parseInt(el.style.left);
       update(ref(db, 'postits/' + activeId), {
-        x: parseInt(el.style.left), 
+        x: newX, 
         y: parseInt(el.style.top),
+        lane: getLaneName(newX),
         updatedAt: serverTimestamp(), 
         action: "📍 ย้าย"
       });
@@ -232,7 +255,6 @@
     document.removeEventListener('touchmove', handleMove);
   }
 
-  // ดึงข้อมูลเรียงตามเวลาเพื่อให้สีที่อัปเดตล่าสุดอยู่บนสุด
   const sortedQuery = query(postitsRef, orderByChild('updatedAt'));
 
   onValue(sortedQuery, (snapshot) => {
@@ -249,8 +271,15 @@
       if (!p) {
         p = document.createElement('div'); p.id = id;
         p.className = `postit ${data.color}`;
-        p.innerHTML = `<div class="content" contenteditable="true"></div><div class="meta-info"><span class="status-tag"></span><span class="time-str"></span></div><button class="delete-btn">✕</button>`;
-        p.querySelector('.delete-btn').onclick = () => remove(ref(db, 'postits/' + id));
+        p.innerHTML = `
+          <div class="content" contenteditable="true"></div>
+          <div class="meta-info">
+            <div class="lane-tag"></div><br>
+            <span class="status-tag"></span> | <span class="time-str"></span>
+          </div>
+          <button class="delete-btn">✕</button>`;
+        
+        p.querySelector('.delete-btn').onclick = () => { if(confirm("ลบโน้ตนี้?")) remove(ref(db, 'postits/' + id)); };
         p.querySelector('.content').onblur = (e) => {
           update(ref(db, 'postits/' + id), { text: e.target.innerText, updatedAt: serverTimestamp(), action: "✏️ แก้ไข" });
         };
@@ -266,7 +295,8 @@
       }
 
       const content = p.querySelector('.content');
-      if (document.activeElement !== content) content.innerText = data.text;
+      if (document.activeElement !== content) content.innerText = data.text || "";
+      p.querySelector('.lane-tag').innerText = data.lane || getLaneName(data.x);
       p.querySelector('.status-tag').innerText = data.action || "";
       p.querySelector('.time-str').innerText = formatDateTime(data.updatedAt);
     });
@@ -276,7 +306,7 @@
     });
   });
 
-  window.clearAllData = () => { if(confirm("ต้องการล้างข้อมูลทั้งหมดบนกระดานใช่หรือไม่?")) remove(postitsRef); };
+  window.clearAllData = () => { if(confirm("ล้างข้อมูลทั้งหมดบนกระดานใช่หรือไม่?")) remove(postitsRef); };
 </script>
 </body>
 </html>
