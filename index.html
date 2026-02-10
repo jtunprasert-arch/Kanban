@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Cloud Kanban - Activity Tracking</title>
 <style>
-  body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; overflow: hidden; touch-action: none; }
+  body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; overflow: hidden; touch-action: none; }
   #container { display: flex; width: 100vw; height: 100vh; padding: 15px; gap: 15px; box-sizing: border-box; }
 
-  /* ส่วนของบอร์ด */
-  #board-wrapper { flex: 4; overflow-x: auto; overflow-y: hidden; border: 8px solid #795548; border-radius: 15px; background: #d7bfa9; position: relative; }
-  #board { width: 1200px; height: 100%; display: flex; position: relative; }
+  /* ส่วนของบอร์ด ปรับให้พอดีหน้าจอ */
+  #board-wrapper { flex: 4; overflow: hidden; border: 8px solid #795548; border-radius: 15px; background: #d7bfa9; position: relative; }
+  #board { width: 100%; height: 100%; display: flex; position: relative; }
   
-  .lane { flex: 1; border-right: 2px dashed rgba(121, 85, 72, 0.3); position: relative; pointer-events: none; }
+  .lane { flex: 1; border-right: 2px dashed rgba(121, 85, 72, 0.3); position: relative; pointer-events: none; min-width: 0; }
   .lane:last-child { border-right: none; }
   .lane-header { background: rgba(255, 255, 255, 0.2); padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; color: #3e2723; border-bottom: 2px solid #795548; pointer-events: auto; }
 
@@ -23,29 +23,53 @@
   /* Post-it */
   .postit { border-radius: 2px; box-sizing: border-box; font-weight: 600; cursor: grab; position: absolute; min-width: 140px; min-height: 140px; padding: 25px 12px 35px; box-shadow: 4px 4px 10px rgba(0,0,0,0.2); z-index: 10; touch-action: none; will-change: transform, left, top; }
   .postit:active { cursor: grabbing; z-index: 1000; }
-  .content { outline: none; white-space: pre-wrap; font-size: 14px; min-height: 80px; color: #333; }
+  .content { outline: none; white-space: pre-wrap; font-size: 14px; min-height: 80px; color: inherit; }
   
-  .meta-info { position: absolute; bottom: 6px; left: 8px; font-size: 9px; opacity: 0.8; pointer-events: none; }
-  .delete-btn { position: absolute; top: 4px; right: 4px; border: none; background: rgba(0,0,0,0.1); border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
+  .meta-info { position: absolute; bottom: 6px; left: 8px; font-size: 9px; opacity: 0.9; pointer-events: none; display: flex; flex-direction: column; }
+  .delete-btn { position: absolute; top: 4px; right: 4px; border: none; background: rgba(0,0,0,0.1); border-radius: 50%; width: 24px; height: 24px; cursor: pointer; color: inherit; font-weight: bold; }
   
   .palette-item { min-height: 35px; border-radius: 4px; cursor: pointer; border: 1px solid #ddd; }
   .btn-clear { padding: 12px; background: #e63946; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
 
-  /* Colors */
-  .yellow { background: #fff475; } .pink { background: #ff9aa2; } .green { background: #b5e7a0; }
-  .blue { background: #a0c4ff; } .orange { background: #ffb347; } .lavender { background: #e1ceff; }
-  .mint { background: #c1f0e8; } .rose { background: #ffc8dd; } .clay { background: #cb997e; }
-  .dark { background: #3d405b; color: white; } .teal { background: #81b29a; } .cream { background: #fefae0; }
-  .coral { background: #ff8b94; } .lime { background: #d4fc79; } .sky { background: #caf0f8; }
-  .coffee { background: #6f4e37; color: white; } .gold { background: #ffd700; } .plum { background: #6a0572; color: white; }
-  .smoke { background: #8d99ae; color: white; } .forest { background: #2d6a4f; color: white; }
-  .brick { background: #bc4749; color: white; } .mustard { background: #e9c46a; } .indigo { background: #4cc9f0; } .peach { background: #f4a261; }
+  /* Color Management */
+  .yellow { background: #fff475; color: #333; } 
+  .pink { background: #ff9aa2; color: #333; } 
+  .green { background: #b5e7a0; color: #333; }
+  .blue { background: #a0c4ff; color: #333; } 
+  .orange { background: #ffb347; color: #333; } 
+  .lavender { background: #e1ceff; color: #333; }
+  .mint { background: #c1f0e8; color: #333; } 
+  .rose { background: #ffc8dd; color: #333; } 
+  .clay { background: #cb997e; color: #fff; }
+  .dark { background: #3d405b; color: #fff; } 
+  .teal { background: #81b29a; color: #fff; } 
+  .cream { background: #fefae0; color: #333; }
+  .coral { background: #ff8b94; color: #fff; } 
+  .lime { background: #d4fc79; color: #333; } 
+  .sky { background: #caf0f8; color: #333; }
+  .coffee { background: #6f4e37; color: #fff; } 
+  .gold { background: #ffd700; color: #333; } 
+  .plum { background: #6a0572; color: #fff; }
+  .smoke { background: #8d99ae; color: #fff; } 
+  .forest { background: #2d6a4f; color: #fff; }
+  .brick { background: #bc4749; color: #fff; } 
+  .mustard { background: #e9c46a; color: #333; } 
+  .indigo { background: #4cc9f0; color: #333; } 
+  .peach { background: #f4a261; color: #fff; }
+
+  /* ปรับปุ่มลบในกรณีสีเข้ม */
+  .postit[style*="color: rgb(255, 255, 255)"] .delete-btn,
+  .postit.dark .delete-btn, .postit.coffee .delete-btn, .postit.forest .delete-btn, .postit.plum .delete-btn, .postit.brick .delete-btn {
+    background: rgba(255, 255, 255, 0.2);
+  }
 
   @media (max-width: 768px) {
     #container { flex-direction: column-reverse; }
     #sidebar { flex: 0.4; min-width: 100%; flex-direction: row; }
     #palette { grid-template-columns: repeat(8, 1fr); height: 70px; }
     .btn-clear { font-size: 10px; width: 70px; }
+    #board { width: 900px; } /* บนมือถือยอมให้ไถข้างได้บ้าง */
+    #board-wrapper { overflow-x: auto; }
   }
 </style>
 </head>
@@ -61,7 +85,7 @@
   </div>
   <div id="sidebar">
     <div id="palette"></div>
-    <button class="btn-clear" onclick="clearAllData()">🗑️ ล้าง</button>
+    <button class="btn-clear" onclick="clearAllData()">🗑️ ล้างทั้งหมด</button>
   </div>
 </div>
 
@@ -85,10 +109,13 @@
 
   const COLOR_LIST = ['yellow', 'pink', 'green', 'blue', 'orange', 'lavender', 'mint', 'rose', 'clay', 'dark', 'teal', 'cream', 'coral', 'lime', 'sky', 'coffee', 'gold', 'plum', 'smoke', 'forest', 'brick', 'mustard', 'indigo', 'peach'];
 
-  function formatTime(ts) {
+  // ฟังก์ชันแสดง วันที่ และ เวลา
+  function formatDateTime(ts) {
     if (!ts) return "";
     const d = new Date(ts);
-    return `${d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}`;
+    const datePart = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit' });
+    const timePart = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    return `${datePart} | ${timePart}`;
   }
 
   COLOR_LIST.forEach(color => {
@@ -97,7 +124,7 @@
     d.onclick = () => {
       const wrapper = document.getElementById('board-wrapper');
       push(postitsRef, { 
-        color, text: "", x: wrapper.scrollLeft + 50, y: 100, 
+        color, text: "", x: wrapper.scrollLeft + 30, y: 80, 
         updatedAt: serverTimestamp(), action: "🆕 สร้าง" 
       });
     }
@@ -113,14 +140,11 @@
     isMoved = false;
     const el = document.getElementById(id);
     const rect = el.getBoundingClientRect();
-    
-    // คำนวณหาจุดที่นิ้ว/เมาส์ สัมผัสภายในตัวโน้ต (เพื่อไม่ให้กระโดดไปตรงกลาง)
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     
     offsetX = clientX - rect.left;
     offsetY = clientY - rect.top;
-
     el.style.zIndex = 1000;
     
     const options = { passive: false };
@@ -137,11 +161,9 @@
 
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    
     const boardRect = document.getElementById('board').getBoundingClientRect();
     const el = document.getElementById(activeId);
 
-    // คำนวณตำแหน่งใหม่เทียบกับจุดกำเนิดของบอร์ด
     let newX = clientX - boardRect.left - offsetX;
     let newY = clientY - boardRect.top - offsetY;
 
@@ -193,11 +215,11 @@
       const content = p.querySelector('.content');
       if (document.activeElement !== content) content.innerText = data[id].text;
       p.querySelector('.status-tag').innerText = data[id].action || "";
-      p.querySelector('.time-str').innerText = formatTime(data[id].updatedAt);
+      p.querySelector('.time-str').innerText = formatDateTime(data[id].updatedAt);
     });
   });
 
-  window.clearAllData = () => { if(confirm("ล้างกระดาน?")) remove(postitsRef); };
+  window.clearAllData = () => { if(confirm("ต้องการล้างข้อมูลทั้งหมดบนกระดานใช่หรือไม่?")) remove(postitsRef); };
 </script>
 </body>
 </html>
