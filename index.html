@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<title>Cloud Kanban - Activity Tracking</title>
+<style>
+  body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; overflow: hidden; }
+  #container { display: flex; width: 100vw; height: 100vh; padding: 20px; gap: 20px; box-sizing: border-box; }
+  #board { flex: 4; background: #d7bfa9; border: 8px solid #795548; border-radius: 15px; position: relative; overflow: hidden; display: flex; }
+  .lane { flex: 1; border-right: 2px dashed rgba(121, 85, 72, 0.3); pointer-events: none; }
+  .lane:last-child { border-right: none; }
+  .lane-header { background: rgba(255, 255, 255, 0.2); padding: 15px; text-align: center; font-size: 1.4rem; font-weight: bold; color: #3e2723; border-bottom: 2px solid #795548; pointer-events: auto; outline: none; }
+  
+  #sidebar { flex: 1.2; display: flex; flex-direction: column; gap: 15px; min-width: 250px; }
+  #palette { background: white; border: 2px solid #795548; border-radius: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding: 10px; overflow-y: auto; flex-grow: 1; }
+  
+  /* Post-it */
+  .postit { border-radius: 2px; box-sizing: border-box; font-weight: 600; cursor: grab; position: absolute; min-width: 150px; min-height: 150px; padding: 25px 15px 35px; box-shadow: 4px 4px 10px rgba(0,0,0,0.2); z-index: 10; touch-action: none; }
+  .postit:active { cursor: grabbing; z-index: 1000; }
+  
+  .content { outline: none; white-space: pre-wrap; font-size: 15px; min-height: 85px; cursor: text; }
+  
+  /* แถบแสดงสถานะและเวลา */
+  .meta-info { position: absolute; bottom: 6px; left: 8px; font-size: 9px; font-weight: normal; opacity: 0.8; pointer-events: none; line-height: 1.2; }
+  .status-tag { font-weight: bold; color: #333; margin-right: 3px; }
+  
+  .delete-btn { position: absolute; top: 4px; right: 4px; border: none; background: rgba(0,0,0,0.1); border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 10px; }
+  .palette-item { position: static; min-width: auto; min-height: 40px; border-radius: 4px; cursor: pointer; }
+  .btn-clear { padding: 12px; background: #e63946; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+
+  /* สี */
+  .yellow { background: #fff475; } .pink { background: #ff9aa2; } .green { background: #b5e7a0; }
+  .blue { background: #a0c4ff; } .orange { background: #ffb347; } .lavender { background: #e1ceff; }
+  .mint { background: #c1f0e8; } .rose { background: #ffc8dd; } .clay { background: #cb997e; }
+  .dark { background: #3d405b; color: white; } .teal { background: #81b29a; } .cream { background: #fefae0; }
+  .coral { background: #ff8b94; } .lime { background: #d4fc79; } .sky { background: #caf0f8; }
+  .coffee { background: #6f4e37; color: white; } .gold { background: #ffd700; } .plum { background: #6a0572; color: white; }
+  .smoke { background: #8d99ae; color: white; } .forest { background: #2d6a4f; color: white; }
+  .brick { background: #bc4749; color: white; } .mustard { background: #e9c46a; } .indigo { background: #4cc9f0; } .peach { background: #f4a261; }
+</style>
+</head>
+<body>
+
+<div id="container">
+  <div id="board">
+    <div class="lane"><div class="lane-header" contenteditable="true" id="h1">TO DO</div></div>
+    <div class="lane"><div class="lane-header" contenteditable="true" id="h2">DOING</div></div>
+    <div class="lane"><div class="lane-header" contenteditable="true" id="h3">DONE</div></div>
+  </div>
+
+  <div id="sidebar">
+    <div id="palette"></div>
+    <button class="btn-clear" onclick="clearAllData()">🗑️ ล้างกระดาน (ทุกคน)</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, onValue, push, remove, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDpGR2xIVmwDMca4423ZcnV-BEcQ_eiEDc",
+    authDomain: "post-its-89b81.firebaseapp.com",
+    databaseURL: "https://post-its-89b81-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    projectId: "post-its-89b81",
+    storageBucket: "post-its-89b81.firebasestorage.app",
+    messagingSenderId: "371569903550",
+    appId: "1:371569903550:web:227e1c3fb87bff201b5bef"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const postitsRef = ref(db, 'postits');
+
+  const COLOR_LIST = ['yellow', 'pink', 'green', 'blue', 'orange', 'lavender', 'mint', 'rose', 'clay', 'dark', 'teal', 'cream', 'coral', 'lime', 'sky', 'coffee', 'gold', 'plum', 'smoke', 'forest', 'brick', 'mustard', 'indigo', 'peach'];
+
+  function formatTime(ts) {
+    if (!ts) return "";
+    const d = new Date(ts);
+    return `${d.toLocaleDateString('th-TH')} ${d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  // สร้าง Palette
+  COLOR_LIST.forEach(color => {
+    const d = document.createElement('div');
+    d.className = `palette-item ${color}`;
+    d.onclick = () => push(postitsRef, { 
+      color, text: "", x: 50, y: 100, 
+      updatedAt: serverTimestamp(), 
+      action: "🆕 สร้างใหม่" 
+    });
+    document.getElementById('palette').appendChild(d);
+  });
+
+  let activeId = null, startX, startY, initialX, initialY, isMoved = false;
+
+  function onMouseDown(e, id, data) {
+    if (e.target.className === 'content' || e.target.className === 'delete-btn') return;
+    activeId = id; startX = e.clientX; startY = e.clientY;
+    initialX = data.x; initialY = data.y; isMoved = false;
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }
+
+  function onMouseMove(e) {
+    if (!activeId) return;
+    isMoved = true;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    const el = document.getElementById(activeId);
+    el.style.left = (initialX + dx) + 'px';
+    el.style.top = (initialY + dy) + 'px';
+  }
+
+  function onMouseUp() {
+    if (activeId && isMoved) {
+      const el = document.getElementById(activeId);
+      update(ref(db, 'postits/' + activeId), {
+        x: parseInt(el.style.left), y: parseInt(el.style.top),
+        updatedAt: serverTimestamp(),
+        action: "📍 ย้าย"
+      });
+    }
+    activeId = null;
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  }
+
+  onValue(postitsRef, (snapshot) => {
+    const data = snapshot.val() || {};
+    const currentIds = Object.keys(data);
+    document.querySelectorAll('#board .postit').forEach(el => { if (!currentIds.includes(el.id)) el.remove(); });
+
+    currentIds.forEach(id => {
+      let p = document.getElementById(id);
+      if (!p) {
+        p = document.createElement('div'); p.id = id;
+        p.innerHTML = `<div class="content" contenteditable="true"></div><div class="meta-info"><span class="status-tag"></span><span class="time-str"></span></div><button class="delete-btn">✕</button>`;
+        p.querySelector('.delete-btn').onclick = () => remove(ref(db, 'postits/' + id));
+        p.querySelector('.content').onblur = (e) => {
+          update(ref(db, 'postits/' + id), { 
+            text: e.target.innerText, updatedAt: serverTimestamp(), action: "✏️ แก้ไข" 
+          });
+        };
+        document.getElementById('board').appendChild(p);
+      }
+      p.className = `postit ${data[id].color}`;
+      p.onmousedown = (e) => onMouseDown(e, id, data[id]);
+      if (activeId !== id) { p.style.left = data[id].x + 'px'; p.style.top = data[id].y + 'px'; }
+      
+      const content = p.querySelector('.content');
+      if (document.activeElement !== content) content.innerText = data[id].text;
+      
+      p.querySelector('.status-tag').innerText = data[id].action || "";
+      p.querySelector('.time-str').innerText = formatTime(data[id].updatedAt);
+    });
+  });
+
+  window.clearAllData = () => { if(confirm("ล้างกระดาน?")) remove(postitsRef); };
+</script>
+</body>
+</html>
