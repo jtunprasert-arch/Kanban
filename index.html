@@ -2,72 +2,34 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0" />
-<title>Cloud BlackBoard - Mobile Optimized</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Cloud Kanban - Activity Tracking</title>
 <style>
-  /* พื้นฐานและ Layout */
-  body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #1a1a1a; display: flex; flex-direction: column; overflow: hidden; }
+  body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; overflow: hidden; touch-action: none; }
+  #container { display: flex; width: 100vw; height: 100vh; padding: 15px; gap: 15px; box-sizing: border-box; }
+
+  /* ส่วนของบอร์ด */
+  #board-wrapper { flex: 4; overflow-x: auto; overflow-y: hidden; border: 8px solid #795548; border-radius: 15px; background: #d7bfa9; position: relative; }
+  #board { width: 1200px; height: 100%; display: flex; position: relative; }
   
-  #container { display: flex; flex-direction: row; height: 100vh; width: 100vw; overflow: hidden; }
+  .lane { flex: 1; border-right: 2px dashed rgba(121, 85, 72, 0.3); position: relative; pointer-events: none; }
+  .lane:last-child { border-right: none; }
+  .lane-header { background: rgba(255, 255, 255, 0.2); padding: 15px; text-align: center; font-size: 1.2rem; font-weight: bold; color: #3e2723; border-bottom: 2px solid #795548; pointer-events: auto; }
 
-  /* ปรับแถบข้างให้ยืดหยุ่น */
-  #sidebar { 
-    width: 80px; 
-    background: #333; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 10px; 
-    padding: 10px; 
-    z-index: 2000;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
-  }
-
-  /* แถบสีที่เลื่อนดูได้ */
-  #palette { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 8px; 
-    overflow-y: auto; 
-    flex-grow: 1; 
-  }
+  /* Sidebar */
+  #sidebar { flex: 1.2; display: flex; flex-direction: column; gap: 10px; min-width: 200px; }
+  #palette { background: white; border: 2px solid #795548; border-radius: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding: 10px; overflow-y: auto; flex-grow: 1; }
   
-  /* พื้นที่กระดานที่เลื่อนได้ (Scrollable) */
-  #board-wrapper {
-    flex: 1;
-    overflow: auto; /* เปิดให้ Scroll ได้ */
-    background-color: #1a1a1a;
-    position: relative;
-  }
-
-  #board { 
-    width: 3000px;  /* ขนาดกระดานจริงที่ใหญ่กว่าหน้าจอ */
-    height: 3000px; 
-    background-color: #222; 
-    background-image: radial-gradient(#333 1px, transparent 1px);
-    background-size: 30px 30px;
-    position: relative;
-    box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
-  }
-
   /* Post-it */
-  .postit { 
-    border-radius: 2px; 
-    position: absolute; 
-    min-width: 140px; 
-    min-height: 140px; 
-    padding: 25px 12px 30px; 
-    box-shadow: 5px 5px 15px rgba(0,0,0,0.4); 
-    z-index: 10; 
-    touch-action: none; /* สำคัญ: ป้องกัน Browser แย่งลากตอนย้ายโน้ต */
-  }
+  .postit { border-radius: 2px; box-sizing: border-box; font-weight: 600; cursor: grab; position: absolute; min-width: 140px; min-height: 140px; padding: 25px 12px 35px; box-shadow: 4px 4px 10px rgba(0,0,0,0.2); z-index: 10; touch-action: none; will-change: transform, left, top; }
+  .postit:active { cursor: grabbing; z-index: 1000; }
+  .content { outline: none; white-space: pre-wrap; font-size: 14px; min-height: 80px; color: #333; }
   
-  .content { outline: none; white-space: pre-wrap; font-size: 15px; min-height: 80px; color: #333; }
-  .delete-btn { position: absolute; top: 4px; right: 4px; border: none; background: rgba(0,0,0,0.1); border-radius: 50%; width: 25px; height: 25px; cursor: pointer; }
-  .meta-info { position: absolute; bottom: 5px; left: 8px; font-size: 9px; opacity: 0.7; pointer-events: none; }
-
-  /* Palette Item */
-  .palette-item { min-height: 35px; width: 100%; border-radius: 4px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
-  .btn-clear { background: #c1121f; color: white; border: none; border-radius: 5px; padding: 10px 5px; font-size: 10px; cursor: pointer; }
+  .meta-info { position: absolute; bottom: 6px; left: 8px; font-size: 9px; opacity: 0.8; pointer-events: none; }
+  .delete-btn { position: absolute; top: 4px; right: 4px; border: none; background: rgba(0,0,0,0.1); border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
+  
+  .palette-item { min-height: 35px; border-radius: 4px; cursor: pointer; border: 1px solid #ddd; }
+  .btn-clear { padding: 12px; background: #e63946; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
 
   /* Colors */
   .yellow { background: #fff475; } .pink { background: #ff9aa2; } .green { background: #b5e7a0; }
@@ -79,37 +41,27 @@
   .smoke { background: #8d99ae; color: white; } .forest { background: #2d6a4f; color: white; }
   .brick { background: #bc4749; color: white; } .mustard { background: #e9c46a; } .indigo { background: #4cc9f0; } .peach { background: #f4a261; }
 
-  /* ปรับแต่งสำหรับมือถือแนวตั้ง */
-  @media (max-width: 600px) {
-    #container { flex-direction: column-reverse; } /* แถบสีอยู่ด้านล่าง */
-    #sidebar { 
-      width: 100%; 
-      height: 120px; 
-      flex-direction: row; 
-      padding: 10px; 
-      box-sizing: border-box;
-    }
-    #palette { 
-      flex-direction: row; 
-      overflow-x: auto; 
-      overflow-y: hidden;
-      align-items: center;
-    }
-    .palette-item { width: 40px; height: 40px; }
-    .btn-clear { width: 60px; height: 40px; }
+  @media (max-width: 768px) {
+    #container { flex-direction: column-reverse; }
+    #sidebar { flex: 0.4; min-width: 100%; flex-direction: row; }
+    #palette { grid-template-columns: repeat(8, 1fr); height: 70px; }
+    .btn-clear { font-size: 10px; width: 70px; }
   }
 </style>
 </head>
 <body>
 
 <div id="container">
+  <div id="board-wrapper">
+    <div id="board">
+      <div class="lane"><div class="lane-header" contenteditable="true">TO DO</div></div>
+      <div class="lane"><div class="lane-header" contenteditable="true">DOING</div></div>
+      <div class="lane"><div class="lane-header" contenteditable="true">DONE</div></div>
+    </div>
+  </div>
   <div id="sidebar">
     <div id="palette"></div>
     <button class="btn-clear" onclick="clearAllData()">🗑️ ล้าง</button>
-  </div>
-
-  <div id="board-wrapper">
-    <div id="board"></div>
   </div>
 </div>
 
@@ -118,13 +70,13 @@
   import { getDatabase, ref, onValue, push, remove, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyBIUG8gWfcx66oUIBZuDEpSPfylakaGjH8",
-    authDomain: "blackboard-568c8.firebaseapp.com",
-    databaseURL: "https://blackboard-568c8-default-rtdb.asia-southeast1.firebasedatabase.app/",
-    projectId: "blackboard-568c8",
-    storageBucket: "blackboard-568c8.firebasestorage.app",
-    messagingSenderId: "913291256438",
-    appId: "1:913291256438:web:ad16d061da1bd3cad97557"
+    apiKey: "AIzaSyDpGR2xIVmwDMca4423ZcnV-BEcQ_eiEDc",
+    authDomain: "post-its-89b81.firebaseapp.com",
+    databaseURL: "https://post-its-89b81-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    projectId: "post-its-89b81",
+    storageBucket: "post-its-89b81.firebasestorage.app",
+    messagingSenderId: "371569903550",
+    appId: "1:371569903550:web:227e1c3fb87bff201b5bef"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -133,57 +85,71 @@
 
   const COLOR_LIST = ['yellow', 'pink', 'green', 'blue', 'orange', 'lavender', 'mint', 'rose', 'clay', 'dark', 'teal', 'cream', 'coral', 'lime', 'sky', 'coffee', 'gold', 'plum', 'smoke', 'forest', 'brick', 'mustard', 'indigo', 'peach'];
 
-  // สร้าง Palette
+  function formatTime(ts) {
+    if (!ts) return "";
+    const d = new Date(ts);
+    return `${d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
   COLOR_LIST.forEach(color => {
     const d = document.createElement('div');
     d.className = `palette-item ${color}`;
     d.onclick = () => {
-      // สร้างโน้ตตรงจุดที่กำลังดูอยู่ (Center of Viewport)
       const wrapper = document.getElementById('board-wrapper');
-      const spawnX = wrapper.scrollLeft + 50;
-      const spawnY = wrapper.scrollTop + 50;
       push(postitsRef, { 
-        color, text: "", x: spawnX, y: spawnY, 
+        color, text: "", x: wrapper.scrollLeft + 50, y: 100, 
         updatedAt: serverTimestamp(), action: "🆕 สร้าง" 
       });
-    };
+    }
     document.getElementById('palette').appendChild(d);
   });
 
-  let activeId = null, startX, startY, initialX, initialY, isMoved = false;
+  let activeId = null, offsetX = 0, offsetY = 0, isMoved = false;
 
-  function startDrag(e, id, data) {
+  function handleStart(e, id) {
     if (e.target.className === 'content' || e.target.className === 'delete-btn') return;
+    
     activeId = id;
+    isMoved = false;
+    const el = document.getElementById(id);
+    const rect = el.getBoundingClientRect();
+    
+    // คำนวณหาจุดที่นิ้ว/เมาส์ สัมผัสภายในตัวโน้ต (เพื่อไม่ให้กระโดดไปตรงกลาง)
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    startX = clientX; startY = clientY;
-    initialX = data.x; initialY = data.y;
-    isMoved = false;
-    document.getElementById(id).style.zIndex = 1000;
+    
+    offsetX = clientX - rect.left;
+    offsetY = clientY - rect.top;
 
-    document.addEventListener('mousemove', moveDrag);
-    document.addEventListener('touchmove', moveDrag, { passive: false });
-    document.addEventListener('mouseup', endDrag);
-    document.addEventListener('touchend', endDrag);
+    el.style.zIndex = 1000;
+    
+    const options = { passive: false };
+    document.addEventListener('mousemove', handleMove, options);
+    document.addEventListener('touchmove', handleMove, options);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchend', handleEnd);
   }
 
-  function moveDrag(e) {
+  function handleMove(e) {
     if (!activeId) return;
     isMoved = true;
-    if (e.cancelable) e.preventDefault(); // กันจอสั่นขณะลากโน้ต
+    if (e.cancelable) e.preventDefault();
 
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const dx = clientX - startX;
-    const dy = clientY - startY;
     
+    const boardRect = document.getElementById('board').getBoundingClientRect();
     const el = document.getElementById(activeId);
-    el.style.left = (initialX + dx) + 'px';
-    el.style.top = (initialY + dy) + 'px';
+
+    // คำนวณตำแหน่งใหม่เทียบกับจุดกำเนิดของบอร์ด
+    let newX = clientX - boardRect.left - offsetX;
+    let newY = clientY - boardRect.top - offsetY;
+
+    el.style.left = newX + 'px';
+    el.style.top = newY + 'px';
   }
 
-  function endDrag() {
+  function handleEnd() {
     if (activeId && isMoved) {
       const el = document.getElementById(activeId);
       update(ref(db, 'postits/' + activeId), {
@@ -192,35 +158,42 @@
       });
     }
     activeId = null;
-    document.removeEventListener('mousemove', moveDrag);
-    document.removeEventListener('touchmove', moveDrag);
+    document.removeEventListener('mousemove', handleMove);
+    document.removeEventListener('touchmove', handleMove);
+    document.removeEventListener('mouseup', handleEnd);
+    document.removeEventListener('touchend', handleEnd);
   }
 
   onValue(postitsRef, (snapshot) => {
     const data = snapshot.val() || {};
     const currentIds = Object.keys(data);
-    document.querySelectorAll('.postit').forEach(el => { if (!currentIds.includes(el.id)) el.remove(); });
+    document.querySelectorAll('#board .postit').forEach(el => { if (!currentIds.includes(el.id)) el.remove(); });
 
     currentIds.forEach(id => {
       let p = document.getElementById(id);
       if (!p) {
         p = document.createElement('div'); p.id = id;
         p.className = `postit ${data[id].color}`;
-        p.innerHTML = `<div class="content" contenteditable="true"></div><div class="meta-info"><span class="status-tag"></span></div><button class="delete-btn">✕</button>`;
+        p.innerHTML = `<div class="content" contenteditable="true"></div><div class="meta-info"><span class="status-tag"></span><span class="time-str"></span></div><button class="delete-btn">✕</button>`;
         p.querySelector('.delete-btn').onclick = () => remove(ref(db, 'postits/' + id));
         p.querySelector('.content').onblur = (e) => {
           update(ref(db, 'postits/' + id), { text: e.target.innerText, updatedAt: serverTimestamp(), action: "✏️ แก้ไข" });
         };
-        p.onmousedown = (e) => startDrag(e, id, data[id]);
-        p.ontouchstart = (e) => startDrag(e, id, data[id]);
+        p.onmousedown = (e) => handleStart(e, id);
+        p.ontouchstart = (e) => handleStart(e, id);
         document.getElementById('board').appendChild(p);
       }
+      
       if (activeId !== id) {
         p.style.left = data[id].x + 'px';
         p.style.top = data[id].y + 'px';
+        p.style.zIndex = 10;
       }
+
       const content = p.querySelector('.content');
       if (document.activeElement !== content) content.innerText = data[id].text;
+      p.querySelector('.status-tag').innerText = data[id].action || "";
+      p.querySelector('.time-str').innerText = formatTime(data[id].updatedAt);
     });
   });
 
